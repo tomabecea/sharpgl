@@ -9,20 +9,23 @@ using System.Windows.Media;
 
 namespace SharpGL.WPF
 {
-  /// <summary>
-  /// This class handles conversion to and from various bitmap types.
-  /// </summary>
+    /// <summary>
+    /// This class handles conversion to and from various bitmap types.
+    /// </summary>
     public static class BitmapConversion
     {
-      /// <summary>
-      /// Converts an HBitmap the bitmap to a bitmap source.
-      /// </summary>
-      /// <param name="hBitmap">The hbitmap.</param>
-      /// <returns>A BitmapSource.</returns>
+        private static int _gcCycles;
+        private static readonly int MaxCyclesBeforeGc = 30;
+
+        /// <summary>
+        /// Converts an HBitmap the bitmap to a bitmap source.
+        /// </summary>
+        /// <param name="hBitmap">The hbitmap.</param>
+        /// <returns>A BitmapSource.</returns>
         public static BitmapSource HBitmapToBitmapSource(IntPtr hBitmap)
         {
             BitmapSource bitSrc = null;
-            
+
             try
             {
                 if (hBitmap != IntPtr.Zero)
@@ -42,7 +45,12 @@ namespace SharpGL.WPF
             finally
             {
                 Win32.DeleteObject(hBitmap);
-                GC.Collect();
+                if (_gcCycles > MaxCyclesBeforeGc)
+                {
+                    GC.Collect();
+                    _gcCycles = 0;
+                }
+                ++_gcCycles;
             }
 
             return bitSrc;
